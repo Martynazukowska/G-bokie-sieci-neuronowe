@@ -1,1 +1,0 @@
-# G-bokie-sieci-neuronowe
