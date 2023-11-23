@@ -2,7 +2,7 @@ import numpy as np
 from lstm import *
 from tqdm import tqdm
 
-data = """Moim zdaniem to nie ma tak, że dobrze albo że nie dobrze.\
+data = "Moim zdaniem to nie ma tak, że dobrze albo że nie dobrze.\
     Gdybym miał powiedzieć, co cenię w życiu najbardziej, powiedziałbym, że ludzi. Ekhm...\
     Ludzi, którzy podali mi pomocną dłoń, kiedy sobie nie radziłem, kiedy byłem sam. I co ciekawe, \
     to właśnie przypadkowe spotkania wpływają na nasze życie. Chodzi o to, \
@@ -13,7 +13,7 @@ data = """Moim zdaniem to nie ma tak, że dobrze albo że nie dobrze.\
     Wielu ludzi pyta mnie o to samo, ale jak ty to robisz?, skąd czerpiesz tę radość?\
     A ja odpowiadam, że to proste, to umiłowanie życia, to właśnie ono sprawia, \
     że dzisiaj na przykład buduję maszyny, a jutro... kto wie, \
-    dlaczego by nie, oddam się pracy społecznej i będę ot, choćby sadzić... znaczy... marchew""".lower()
+    dlaczego by nie, oddam się pracy społecznej i będę ot, choćby sadzić... znaczy... marchew".lower()
 
 # Tworzenie zestawu unikalnych znaków
 chars = set(data)
@@ -36,8 +36,9 @@ hidden_size = 25
 input_size = char_size + hidden_size
 output_size = char_size
 
+lstm = LSTM(input_size, hidden_size, output_size , num_epochs = 1_000, learning_rate = 0.05)
+
 print(input_size)
 print(hidden_size)
 print(output_size)
 
-lstm = LSTM(input_size, hidden_size, output_size , num_epochs = 1_000, learning_rate = 0.05)
