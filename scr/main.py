@@ -2,22 +2,18 @@ import numpy as np
 from lstm import *
 from tqdm import tqdm
 
-##### Data #####
-data = """To be, or not to be, that is the question: Whether \
-'tis nobler in the mind to suffer The slings and arrows of ou\
-trageous fortune, Or to take arms against a sea of troubles A\
-nd by opposing end them. To die—to sleep, No more; and by a s\
-leep to say we end The heart-ache and the thousand natural sh\
-ocks That flesh is heir to: 'tis a consummation Devoutly to b\
-e wish'd. To die, to sleep; To sleep, perchance to dream—ay, \
-there's the rub: For in that sleep of death what dreams may c\
-ome, When we have shuffled off this mortal coil, Must give us\
- pause—there's the respect That makes calamity of so long lif\
-e. For who would bear the whips and scorns of time, Th'oppres\
-sor's wrong, the proud man's contumely, The pangs of dispriz'\
-d love, the law's delay, The insolence of office, and the spu\
-rns That patient merit of th'unworthy takes, When he himself \
-might his quietus make""".lower()
+data = """Moim zdaniem to nie ma tak, że dobrze albo że nie dobrze.\
+    Gdybym miał powiedzieć, co cenię w życiu najbardziej, powiedziałbym, że ludzi. Ekhm...\
+    Ludzi, którzy podali mi pomocną dłoń, kiedy sobie nie radziłem, kiedy byłem sam. I co ciekawe, \
+    to właśnie przypadkowe spotkania wpływają na nasze życie. Chodzi o to, \
+    że kiedy wyznaje się pewne wartości, nawet pozornie uniwersalne, bywa, \
+    że nie znajduje się zrozumienia, które by tak rzec, które pomaga się nam rozwijać.\
+    Ja miałem szczęście, by tak rzec, ponieważ je znalazłem. I dziękuję życiu. \
+    Dziękuję mu, życie to śpiew, życie to taniec, życie to miłość. \
+    Wielu ludzi pyta mnie o to samo, ale jak ty to robisz?, skąd czerpiesz tę radość?\
+    A ja odpowiadam, że to proste, to umiłowanie życia, to właśnie ono sprawia, \
+    że dzisiaj na przykład buduję maszyny, a jutro... kto wie, \
+    dlaczego by nie, oddam się pracy społecznej i będę ot, choćby sadzić... znaczy... marchew""".lower()
 
 # Tworzenie zestawu unikalnych znaków
 chars = set(data)
@@ -34,9 +30,14 @@ idx_to_char = {i:c for i, c in enumerate(chars)}
 
 train_X, train_y = data[:-1], data[1:]
 
-print()
-
 # Initialize Network
 hidden_size = 25
 
-lstm = LSTM(input_size = char_size + hidden_size, hidden_size = hidden_size, output_size = char_size, num_epochs = 1_000, learning_rate = 0.05)
+input_size = char_size + hidden_size
+output_size = char_size
+
+print(input_size)
+print(hidden_size)
+print(output_size)
+
+lstm = LSTM(input_size, hidden_size, output_size , num_epochs = 1_000, learning_rate = 0.05)
