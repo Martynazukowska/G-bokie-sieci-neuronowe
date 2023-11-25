@@ -35,14 +35,15 @@ print(f'Rozmiar danych: {data_size}, Liczba unikalnych znaków: {char_size}')
 char_to_idx = {c:i for i, c in enumerate(chars)}
 idx_to_char = {i:c for i, c in enumerate(chars)}
 
-train_X, train_y = data[:-1], data[1:]
+
+train_X, train_y = data[100:], data[:-100]
 
 # Initialize Network
-hidden_size = 25
+hidden_size = 20
 
 input_size = char_size + hidden_size
 output_size = char_size
-num_epochs = 1_000
+num_epochs = 1000
 
 lstm = LSTM(input_size, hidden_size, output_size , num_epochs, learning_rate = 0.05)
 
@@ -52,6 +53,7 @@ lstm = LSTM(input_size, hidden_size, output_size , num_epochs, learning_rate = 0
 
 lstm.train(train_X, train_y,tqdm,char_size,char_to_idx)
 
+lstm.test(train_X, train_y,idx_to_char,char_size,char_to_idx)
 
 
 # for epoch in tqdm(range(1000)):  # Number of epochs

@@ -77,7 +77,7 @@ class LSTM:
             self.input_gates[q] = sigmoid(np.dot(self.weight_i, self.concat_inputs[q]) + self.bias_i)
             # Obliczanie kandydata na nowy stan komórki
             self.candidate_gates[q] = tanh(np.dot(self.weight_c, self.concat_inputs[q]) + self.bias_c)
-            # Obliczanie aktywacji bramki wyjściowej (Final/Last Gate)
+            # Obliczanie aktywacji bramki wyjściowej 
             self.output_gates[q] = sigmoid(np.dot(self.weight_o, self.concat_inputs[q]) + self.bias_o)
 
             # Aktualizacja stanu komórki
@@ -85,7 +85,7 @@ class LSTM:
             # Aktualizacja stanu ukrytego (hidden_states)
             self.hidden_states[q] = self.output_gates[q] * tanh(self.cell_states[q])
 
-            # Obliczanie wyjściam 
+            # Obliczanie wyjścia
             outputs += [np.dot(self.weight_l, self.hidden_states[q]) + self.bias_l]
 
         return outputs
@@ -101,6 +101,93 @@ class LSTM:
                 errors += [-softmax(predictions[q])]
                 # Inkrementacja odpowiedniego elementu błędu.
                 errors[-1][char_to_idx[labels[q]]] += 1
+            
+            self.backward(errors, self.concat_inputs)
+
+            
+
+    # Backward Propogation
+    def backward(self, errors, inputs):
+        # Initialize weight and bias deltas
+        d_weights = {k: 0 for k in ['f', 'i', 'c', 'o', 'l']}
+        d_biases = {k: 0 for k in ['f', 'i', 'c', 'o', 'l']}
+
+        # Inicjalizacja następnego błędu stanu ukrytego i stanu komórki
+        next_error_hs, next_error_c = np.zeros_like(self.hidden_states[0]), np.zeros_like(self.cell_states[0])
+
+        for q in reversed(range(len(inputs))):
+            error = errors[q]
+
+            # Final Gate Weights and Biases Errors
+            d_weights['l'] += np.dot(error, self.hidden_states[q].T)
+            d_biases['l'] += error
+
+            # Obliczenie błędu stanu ukrytego
+            error_hs = np.dot(self.weight_l.T, error) + next_error_hs
+
+            # Output Gate Weights and Biases Errors
+            error_o = tanh(self.cell_states[q]) * error_hs * sigmoid(self.output_gates[q], derivative = True)
+            d_weights['o'] += np.dot(error_o, inputs[q].T)
+            d_biases['o'] += error_o
+
+            # Cell State Error
+            error_c = tanh(tanh(self.cell_states[q]), derivative = True) * self.output_gates[q] * error_hs + next_error_c
+
+            # Forget Gate Weights and Biases Errors
+            error_f = error_c * self.cell_states[q - 1] * sigmoid(self.forget_gates[q], derivative = True)
+            d_weights['f'] += np.dot(error_f, inputs[q].T)
+            d_biases['f'] += error_f
+
+            # Input Gate Weights and Biases Errors
+            error_i = error_c * self.candidate_gates[q] * sigmoid(self.input_gates[q], derivative = True)
+            d_weights['i'] += np.dot(error_i, inputs[q].T)
+            d_biases['i'] += error_i
+            
+            # Candidate Gate Weights and Biases Errors
+            error_can = error_c * self.input_gates[q] * tanh(self.candidate_gates[q], derivative = True)
+            d_weights['c'] += np.dot(error_can, inputs[q].T)
+            d_biases['c'] += error_can
+
+            # Concatenated Input Error (Sum of Error at Each Gate!)
+            d_z = np.dot(self.weight_f.T, error_f) + np.dot(self.weight_i.T, error_i) + np.dot(self.weight_c.T, error_can) + np.dot(self.weight_o.T, error_o)
+
+            # Error of Hidden State and Cell State at Next Time Step
+            next_error_hs = d_z[:self.hidden_size, :]
+            next_error_c = self.forget_gates[q] * error_c
+
+
+        for d_ in (d_weights['f'], d_biases['f'], d_weights['i'], d_biases['i'], d_weights['c'], d_biases['c'], d_weights['o'], d_biases['o'], d_weights['l'], d_biases['l']):
+            np.clip(d_, -1, 1, out = d_)
+
+        self.weight_f += d_weights['f'] * self.learning_rate
+        self.weight_i += d_weights['i'] * self.learning_rate
+        self.weight_c += d_weights['c'] * self.learning_rate
+        self.weight_o += d_weights['o'] * self.learning_rate
+        self.weight_l += d_weights['l'] * self.learning_rate
+        
+        self.bias_f += d_biases['f'] * self.learning_rate
+        self.bias_i += d_biases['i'] * self.learning_rate
+        self.bias_c += d_biases['c'] * self.learning_rate
+        self.bias_o += d_biases['o'] * self.learning_rate
+        self.bias_l += d_biases['l'] * self.learning_rate
+
+        # Test
+    def test(self, inputs, labels,idx_to_char,char_size,char_to_idx):
+        accuracy = 0
+        output = ''
+        probabilities = self.forward([oneHotEncode(input,char_size,char_to_idx) for input in inputs])
+
+        for q in range(len(labels)):
+            prediction = idx_to_char[np.random.choice([*range(char_size)], p = softmax(probabilities[q].reshape(-1)))]
+            output += prediction
+            if prediction == labels[q]:
+                accuracy += 1
+
+        print(f'Początkowa wartość : \n')
+        print(f'\t {labels} \n')
+        print(f'Predykcja :\n \t {"".join(output)}\n')
+        
+        print(f'Accuracy: {round(accuracy * 100 / len(inputs), 2)} %')
     
 
 
