@@ -1,4 +1,5 @@
 import numpy as np
+from sgdm import *
 from lstm import *
 from tqdm import tqdm
 
@@ -8,6 +9,15 @@ from tqdm import tqdm
 #     output[char_to_idx[text]] = 1
 
 #     return output
+
+# def generate_text(model, start_text, length=50):
+#     text_generated = start_text
+#     for _ in range(length):
+#         input_encoded = oneHotEncode(text_generated[-1], char_size, char_to_idx)
+#         predictions = model.forward(input_encoded)
+#         next_char = idx_to_char[np.argmax(predictions)]
+#         text_generated += next_char
+#     return text_generated
 
 data = """Moim zdaniem to nie ma tak, że dobrze albo że nie dobrze.\
     Gdybym miał powiedzieć, co cenię w życiu najbardziej, powiedziałbym, że ludzi. Ekhm...\
@@ -36,16 +46,22 @@ char_to_idx = {c:i for i, c in enumerate(chars)}
 idx_to_char = {i:c for i, c in enumerate(chars)}
 
 
-train_X, train_y = data[100:], data[:-100]
+train_X, train_y = data[10:], data[:-10]
 
 # Initialize Network
-hidden_size = 20
+hidden_size = 25
 
 input_size = char_size + hidden_size
 output_size = char_size
-num_epochs = 1000
+num_epochs = 500
 
+print("bez")
 lstm = LSTM(input_size, hidden_size, output_size , num_epochs, learning_rate = 0.05)
+
+print("SGDM")
+lstm_sgdm = LSTM_sgdm(input_size, hidden_size, output_size , num_epochs, learning_rate = 0.05)
+
+
 
 # print(input_size)
 # print(hidden_size)
@@ -55,20 +71,10 @@ lstm.train(train_X, train_y,tqdm,char_size,char_to_idx)
 
 lstm.test(train_X, train_y,idx_to_char,char_size,char_to_idx)
 
+lstm_sgdm.train(train_X, train_y,tqdm,char_size,char_to_idx)
 
-# for epoch in tqdm(range(1000)):  # Number of epochs
-#     for i in range(len(train_X)):
-#         input_char = train_X[i]
-#         target_char = train_y[i]
+lstm_sgdm.test(train_X, train_y,idx_to_char,char_size,char_to_idx)
 
-#         # Ensure that input_char and target_char are single characters
-#         if not isinstance(input_char, str) or not isinstance(target_char, str):
-#             raise TypeError("Expected a single character string")
-
-#         input_encoded = oneHotEncode(input_char, char_size, char_to_idx)
-#         target_encoded = oneHotEncode(target_char, char_size, char_to_idx)
-#         # Forward 
-#         lstm.forward(input_encoded)
 
 
 

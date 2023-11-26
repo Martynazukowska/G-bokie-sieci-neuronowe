@@ -32,7 +32,7 @@ def softmax(input):
     return np.exp(input) / np.sum(np.exp(input))
 
 # Klasa LSTM
-class LSTM:
+class LSTM_sgdm:
     # Inicjalizacja sieci LSTM
     def __init__(self, input_size, hidden_size, output_size, num_epochs, learning_rate):
         # Hiperparametry
@@ -52,6 +52,12 @@ class LSTM:
         self.bias_c = np.zeros((hidden_size, 1))
         self.bias_o = np.zeros((hidden_size, 1))
         self.bias_l = np.zeros((output_size, 1))
+
+        self.v, self.s = {}, {}
+        for param in ['f', 'i', 'c', 'o', 'l']:
+            self.v[param] = np.zeros_like(getattr(self, f'weight_{param}'))
+            self.s[param] = np.zeros_like(getattr(self, f'weight_{param}'))
+
 
     # Forward Propogation
     def forward(self, inputs):
@@ -112,6 +118,8 @@ class LSTM:
         d_weights = {k: 0 for k in ['f', 'i', 'c', 'o', 'l']}
         d_biases = {k: 0 for k in ['f', 'i', 'c', 'o', 'l']}
 
+        beta = 0.9 
+
         # Inicjalizacja następnego błędu stanu ukrytego i stanu komórki
         next_error_hs, next_error_c = np.zeros_like(self.hidden_states[0]), np.zeros_like(self.cell_states[0])
 
@@ -159,17 +167,20 @@ class LSTM:
         for d_ in (d_weights['f'], d_biases['f'], d_weights['i'], d_biases['i'], d_weights['c'], d_biases['c'], d_weights['o'], d_biases['o'], d_weights['l'], d_biases['l']):
             np.clip(d_, -1, 1, out = d_)
 
-        self.weight_f += d_weights['f'] * self.learning_rate
-        self.weight_i += d_weights['i'] * self.learning_rate
-        self.weight_c += d_weights['c'] * self.learning_rate
-        self.weight_o += d_weights['o'] * self.learning_rate
-        self.weight_l += d_weights['l'] * self.learning_rate
+        self.update_weights_sgdm(d_weights, d_biases)
+
+        # self.weight_f += d_weights['f'] * self.learning_rate
+        # self.weight_i += d_weights['i'] * self.learning_rate
+        # self.weight_c += d_weights['c'] * self.learning_rate
+        # self.weight_o += d_weights['o'] * self.learning_rate
+        # self.weight_l += d_weights['l'] * self.learning_rate
         
-        self.bias_f += d_biases['f'] * self.learning_rate
-        self.bias_i += d_biases['i'] * self.learning_rate
-        self.bias_c += d_biases['c'] * self.learning_rate
-        self.bias_o += d_biases['o'] * self.learning_rate
-        self.bias_l += d_biases['l'] * self.learning_rate
+        # self.bias_f += d_biases['f'] * self.learning_rate
+        # self.bias_i += d_biases['i'] * self.learning_rate
+        # self.bias_c += d_biases['c'] * self.learning_rate
+        # self.bias_o += d_biases['o'] * self.learning_rate
+        # self.bias_l += d_biases['l'] * self.learning_rate
+
 
         # Test
     def test(self, inputs, labels,idx_to_char,char_size,char_to_idx):
@@ -189,6 +200,17 @@ class LSTM:
         
         print(f'Accuracy: {round(accuracy * 100 / len(inputs), 2)} %')
 
+    # Funkcja aktualizacji wag przy użyciu SGDM
+    def update_weights_sgdm(self, d_weights, d_biases, beta=0.2):
+        for param in d_weights.keys():
+            self.v[param] = beta * self.v[param] + (1 - beta) * d_weights[param]
+            weight = getattr(self, f'weight_{param}')
+            weight += self.learning_rate * self.v[param]
+            setattr(self, f'weight_{param}', weight)
+            
+            bias = getattr(self, f'bias_{param}')
+            bias += self.learning_rate * d_biases[param]
+            setattr(self, f'bias_{param}', bias)
 
 
 
